@@ -95,7 +95,7 @@ void main() {
         when(remoteDataSource.getConcreteNumberTrivia(any))
             .thenAnswer((_) async => tNumberTriviaModel);
         //act
-        final result = await repositoryImpl.getConcreteNumberTrivia(tNumber);
+        await repositoryImpl.getConcreteNumberTrivia(tNumber);
         //assert
         verify(remoteDataSource.getConcreteNumberTrivia(tNumber));
         verify(localDataSource.cacheNumberTrivia(tNumberTriviaModel));
@@ -131,12 +131,102 @@ void main() {
         expect(result, equals(Right(tNumberTrivia)));
       });
 
-      test('should return cache exception when the caached data is not present',
+      test('should return cache failure when the caached data is not present',
           () async {
         //arrange
         when(localDataSource.getLastNumberTrivia()).thenThrow(CacheException());
         //act
         final result = await repositoryImpl.getConcreteNumberTrivia(tNumber);
+        //assert
+        verifyZeroInteractions(remoteDataSource);
+        verify(localDataSource.getLastNumberTrivia());
+        expect(result, equals(Left(CacheFailure())));
+      });
+    });
+  });
+
+  group('getRandomNumberTrivia', () {
+    // DATA FOR THE MOCKS AND ASSERTIONS
+    // We'll use these three variables throughout all the tests
+    final tNumberTriviaModel =
+        NumberTriviaModel(number: 123, text: 'test trivia');
+    final NumberTrivia tNumberTrivia = tNumberTriviaModel;
+
+    test(
+      'should check if the device is online',
+      () {
+        //arrange
+        when(networkInfo.isConnected).thenAnswer((_) async => true);
+        // act
+        repositoryImpl.getRandomNumberTrivia();
+        // assert
+        verify(networkInfo.isConnected);
+      },
+    );
+
+    runTestsOnline(() {
+      test(
+          'should return remote data when the call to remote data source is successful',
+          () async {
+        //arrange
+        when(remoteDataSource.getRandomNumberTrivia())
+            .thenAnswer((_) async => tNumberTriviaModel);
+        //act
+        final result = await repositoryImpl.getRandomNumberTrivia();
+        //assert
+        verify(remoteDataSource.getRandomNumberTrivia());
+        expect(result, equals(Right(tNumberTrivia)));
+      });
+
+      test(
+          'should cache the data locally when the call to remote data source is successful',
+          () async {
+        //arrange
+        when(remoteDataSource.getRandomNumberTrivia())
+            .thenAnswer((_) async => tNumberTriviaModel);
+        //act
+        await repositoryImpl.getRandomNumberTrivia();
+        //assert
+        verify(remoteDataSource.getRandomNumberTrivia());
+        verify(localDataSource.cacheNumberTrivia(tNumberTriviaModel));
+      });
+
+      test(
+          'should return server failure when the call to remote data source is unsuccessful',
+          () async {
+        //arrange
+        when(remoteDataSource.getRandomNumberTrivia())
+            .thenThrow(ServerException());
+        //act
+        final result = await repositoryImpl.getRandomNumberTrivia();
+        //assert
+        verify(remoteDataSource.getRandomNumberTrivia());
+        verifyZeroInteractions(localDataSource);
+        expect(result, equals(Left(ServerFailure())));
+      });
+    });
+
+    runTestsOffline(() {
+      test(
+          'should return last locally cached data when the caached data is present',
+          () async {
+        //arrange
+        when(localDataSource.getLastNumberTrivia())
+            .thenAnswer((_) async => tNumberTriviaModel);
+        //act
+        final result = await repositoryImpl.getRandomNumberTrivia();
+        //assert
+        verifyZeroInteractions(remoteDataSource);
+        verify(localDataSource.getLastNumberTrivia());
+        expect(result, equals(Right(tNumberTrivia)));
+      });
+
+      test('should return cache failure when the caached data is not present',
+          () async {
+        //arrange
+        when(localDataSource.getLastNumberTrivia()).thenThrow(CacheException());
+        //act
+        final result = await repositoryImpl.getRandomNumberTrivia();
         //assert
         verifyZeroInteractions(remoteDataSource);
         verify(localDataSource.getLastNumberTrivia());
