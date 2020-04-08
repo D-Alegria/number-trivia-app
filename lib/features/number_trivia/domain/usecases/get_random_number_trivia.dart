@@ -6,13 +6,13 @@ import '../../../../core/usecase/usecase.dart';
 import '../entities/number_trivia.dart';
 import '../repositories/number_trivia_repository.dart';
 
-class GetRandomNumberTrivia extends UseCase<NumberTrivia, NoParam>{
+class GetRandomNumberTrivia extends UseCase<NumberTrivia, NoParams>{
   final NumberTriviaRepository numberTriviaRepository;
 
   GetRandomNumberTrivia(this.numberTriviaRepository);
 
   @override
-  Future<Either<Failure,NumberTrivia>> call(NoParam noParam) async {
+  Future<Either<Failure,NumberTrivia>> call(NoParams noParam) async {
     return await numberTriviaRepository.getRandomNumberTrivia();
   }
 }
